@@ -10,6 +10,8 @@ import (
 	"launchpad.net/gnuflag"
 	"log"
 	"os"
+	"os/user"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"sync"
@@ -220,20 +222,34 @@ func logic(key string, newstructure NewTorrentStructure, torrentspath *string, w
 }
 
 func main() {
-	var delugedir, qbitdir, config string
+	var delugedir, qbitdir, config, ddir, btconf, btbackup string
 	var with_label, with_tags bool = true, true
 	var without_label, without_tags bool
-	gnuflag.StringVar(&delugedir, "source", (os.Getenv("APPDATA") + "\\deluge\\"),
+	sep := string(os.PathSeparator)
+	if runtime.GOOS == "windows" {
+		ddir = os.Getenv("APPDATA") + sep + "deluge" + sep
+		btconf = os.Getenv("APPDATA") + sep + "qBittorrent" + sep + "qBittorrent.ini"
+		btbackup = os.Getenv("LOCALAPPDATA") + sep + "qBittorrent" + sep + "BT_backup" + sep
+	} else {
+		user, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+		ddir = user.HomeDir + sep + ".config" + sep + "deluge" + sep
+		btconf = user.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qBittorrent.conf"
+		btbackup = user.HomeDir + sep + ".local" + sep + "share" + sep + "data" + sep + "qBittorrent" + sep + "BT_backup"
+	}
+	gnuflag.StringVar(&delugedir, "source", ddir,
 		"Source directory that contains resume.dat and torrents files")
-	gnuflag.StringVar(&delugedir, "s", (os.Getenv("APPDATA") + "\\deluge\\"),
+	gnuflag.StringVar(&delugedir, "s", ddir,
 		"Source directory that contains resume.dat and torrents files")
-	gnuflag.StringVar(&qbitdir, "destination", (os.Getenv("LOCALAPPDATA") + "\\qBittorrent\\BT_backup\\"),
+	gnuflag.StringVar(&qbitdir, "destination", btbackup,
 		"Destination directory BT_backup (as default)")
-	gnuflag.StringVar(&qbitdir, "d", (os.Getenv("LOCALAPPDATA") + "\\qBittorrent\\BT_backup\\"),
+	gnuflag.StringVar(&qbitdir, "d", btbackup,
 		"Destination directory BT_backup (as default)")
-	gnuflag.StringVar(&config, "qconfig", (os.Getenv("APPDATA") + "\\qBittorrent\\qBittorrent.ini"),
+	gnuflag.StringVar(&config, "qconfig", btconf,
 		"qBittorrent config files (for write tags)")
-	gnuflag.StringVar(&config, "c", (os.Getenv("APPDATA") + "\\qBittorrent\\qBittorrent.ini"),
+	gnuflag.StringVar(&config, "c", btconf,
 		"qBittorrent config files (for write tags)")
 	gnuflag.BoolVar(&without_label, "without-labels", false, "Do not export/import labels")
 	gnuflag.BoolVar(&without_tags, "without-tags", false, "Do not export/import tags")
@@ -246,11 +262,11 @@ func main() {
 		with_tags = false
 	}
 
-	if delugedir[len(delugedir)-1] != os.PathSeparator {
-		delugedir += string(os.PathSeparator)
+	if string(delugedir[len(delugedir)-1]) != sep {
+		delugedir += sep
 	}
-	if qbitdir[len(qbitdir)-1] != os.PathSeparator {
-		qbitdir += string(os.PathSeparator)
+	if string(qbitdir[len(qbitdir)-1]) != sep {
+		qbitdir += sep
 	}
 
 	if _, err := os.Stat(delugedir); os.IsNotExist(err) {
@@ -263,13 +279,13 @@ func main() {
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	torrentspath := delugedir + "state" + string(os.PathSeparator)
+	torrentspath := delugedir + "state" + sep
 	if _, err := os.Stat(torrentspath); os.IsNotExist(err) {
 		log.Println("Can't find deluge state directory")
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	resumefilepath := delugedir + "state" + string(os.PathSeparator) + "torrents.fastresume"
+	resumefilepath := delugedir + "state" + sep + "torrents.fastresume"
 	if _, err := os.Stat(resumefilepath); os.IsNotExist(err) {
 		log.Println("Can't find deluge fastresume file")
 		time.Sleep(30 * time.Second)
