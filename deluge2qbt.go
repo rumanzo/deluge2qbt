@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/fatih/color"
+	"github.com/go-ini/ini"
 	"github.com/zeebo/bencode"
 	"io"
 	"io/ioutil"
@@ -14,12 +17,9 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
-	"bytes"
-	"encoding/json"
-	"github.com/go-ini/ini"
-	"strings"
 )
 
 func ASCIIconvert(s string) string {
@@ -73,7 +73,6 @@ func encodetorrentfile(path string, newstructure *NewTorrentStructure) error {
 	bufferedWriter.Flush()
 	return nil
 }
-
 
 func copyfile(src string, dst string) error {
 	originalFile, err := os.Open(src)
@@ -156,7 +155,7 @@ type NewTorrentStructure struct {
 }
 
 type Alabels struct {
-	_ map[string]interface{}
+	_              map[string]interface{}
 	Torrent_labels map[string]string `json:"torrent_labels,omitempty"`
 }
 
@@ -188,8 +187,8 @@ func logic(key string, newstructure NewTorrentStructure, torrentspath *string, w
 	}
 	newstructure.QbtqueuePosition = position
 	newstructure.QbtqueuePosition = 1
-	newstructure.QbtratioLimit= -2000
-	newstructure.QbtseedStatus= 1
+	newstructure.QbtratioLimit = -2000
+	newstructure.QbtseedStatus = 1
 	newstructure.QbtseedingTimeLimit = -2
 	newstructure.QbttempPathDisabled = 0
 	newstructure.Qbtname = ""
@@ -343,14 +342,26 @@ func main() {
 		json.Unmarshal(jsn.Bytes(), &hashlabels)
 	}
 	for key, value := range fastresumefile {
-			positionnum++
-			wg.Add(1)
-			var decodedval NewTorrentStructure
-			if err := bencode.DecodeString(value.(string), &decodedval); err != nil {
+		positionnum++
+		var decodedval NewTorrentStructure
+		if err := bencode.DecodeString(value.(string), &decodedval); err != nil {
+			torrentfile := map[string]interface{}{}
+			torrentfilepath := delugedir + "state" + sep + key + ".torrent"
+			if _, err = os.Stat(torrentfilepath); os.IsNotExist(err) {
+				errChannel <- fmt.Sprintf("Can't find torrent file %v. Can't decode string %v. Continue", torrentfilepath, key)
 				continue
 			}
-			go logic(key, decodedval, &torrentspath, &with_label, &with_tags, &qbitdir, comChannel,
-				errChannel, positionnum, &wg, &hashlabels)
+			torrentfile, err = decodetorrentfile(torrentfilepath)
+			if err != nil {
+				errChannel <- fmt.Sprintf("Can't decode torrent file %v. Can't decode string %v. Continue", torrentfilepath, key)
+				continue
+			}
+			torrentname := torrentfile["info"].(map[string]interface{})["name"].(string)
+			log.Printf("Can't decode row %v with torrent %v. Continue", key, torrentname)
+		}
+		wg.Add(1)
+		go logic(key, decodedval, &torrentspath, &with_label, &with_tags, &qbitdir, comChannel,
+			errChannel, positionnum, &wg, &hashlabels)
 	}
 	go func() {
 		wg.Wait()
@@ -361,10 +372,10 @@ func main() {
 		fmt.Printf("%v/%v %v \n", numjob, totaljobs, message)
 		numjob++
 	}
-	var vaserrors bool
+	var waserrors bool
 	for message := range errChannel {
 		fmt.Printf("%v/%v %v \n", numjob, totaljobs, message)
-		vaserrors = true
+		waserrors = true
 		numjob++
 	}
 
@@ -411,7 +422,7 @@ func main() {
 	}
 	fmt.Println()
 	log.Println("Ended")
-	if vaserrors {
+	if waserrors {
 		log.Println("Not all torrents was processed")
 	}
 	fmt.Println("\nPress Enter to exit")
