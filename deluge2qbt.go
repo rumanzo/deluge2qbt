@@ -222,7 +222,7 @@ func logic(key string, newstructure NewTorrentStructure, torrentspath *string, w
 
 func main() {
 	var delugedir, qbitdir, config, ddir, btconf, btbackup string
-	var with_label, with_tags bool = true, true
+	var with_label, with_tags = true, true
 	var without_label, without_tags bool
 	sep := string(os.PathSeparator)
 	if runtime.GOOS == "windows" {
@@ -230,13 +230,13 @@ func main() {
 		btconf = os.Getenv("APPDATA") + sep + "qBittorrent" + sep + "qBittorrent.ini"
 		btbackup = os.Getenv("LOCALAPPDATA") + sep + "qBittorrent" + sep + "BT_backup" + sep
 	} else {
-		user, err := user.Current()
+		usr, err := user.Current()
 		if err != nil {
 			panic(err)
 		}
-		ddir = user.HomeDir + sep + ".config" + sep + "deluge" + sep
-		btconf = user.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qBittorrent.conf"
-		btbackup = user.HomeDir + sep + ".local" + sep + "share" + sep + "data" + sep + "qBittorrent" + sep + "BT_backup"
+		ddir = usr.HomeDir + sep + ".config" + sep + "deluge" + sep
+		btconf = usr.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qBittorrent.conf"
+		btbackup = usr.HomeDir + sep + ".local" + sep + "share" + sep + "data" + sep + "qBittorrent" + sep + "BT_backup"
 	}
 	gnuflag.StringVar(&delugedir, "source", ddir,
 		"Source directory that contains resume.dat and torrents files")
@@ -319,7 +319,7 @@ func main() {
 	numjob := 1
 	var wg sync.WaitGroup
 	comChannel := make(chan string, totaljobs)
-	errChannel := make(chan string, totaljobs)
+	errChannel := make(chan string, totaljobs*2)
 	positionnum := 0
 	var jsn bytes.Buffer
 	var hashlabels Alabels
@@ -339,7 +339,9 @@ func main() {
 				}
 			}
 		}
-		json.Unmarshal(jsn.Bytes(), &hashlabels)
+		if err := json.Unmarshal(jsn.Bytes(), &hashlabels); err != nil {
+			with_label, with_tags = false, false
+		}
 	}
 	for key, value := range fastresumefile {
 		positionnum++
@@ -374,9 +376,8 @@ func main() {
 	}
 	var waserrors bool
 	for message := range errChannel {
-		fmt.Printf("%v/%v %v \n", numjob, totaljobs, message)
+		log.Printf("%v \n", message)
 		waserrors = true
-		numjob++
 	}
 
 	if with_tags == true {
