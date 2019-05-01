@@ -160,8 +160,12 @@ type Alabels struct {
 }
 
 func logic(key string, newstructure NewTorrentStructure, torrentspath *string, with_label *bool, with_tags *bool,
-	qbitdir *string, comChannel chan string, errChannel chan string, position int, wg *sync.WaitGroup, hashlabels *Alabels) error {
+	qbitdir *string, comChannel chan string, errChannel chan string, position int, wg *sync.WaitGroup, hashlabels *Alabels,
+	boundedChannel chan bool) error {
 	defer wg.Done()
+	defer func() {
+		<-boundedChannel
+	}()
 	defer func() {
 		if r := recover(); r != nil {
 			errChannel <- fmt.Sprintf(
@@ -319,7 +323,7 @@ func main() {
 	numjob := 1
 	var wg sync.WaitGroup
 	comChannel := make(chan string, totaljobs)
-	errChannel := make(chan string, totaljobs*2)
+	errChannel := make(chan string, totaljobs)
 	positionnum := 0
 	var jsn bytes.Buffer
 	var hashlabels Alabels
@@ -343,6 +347,7 @@ func main() {
 			with_label, with_tags = false, false
 		}
 	}
+	boundedChannel := make(chan bool, runtime.GOMAXPROCS(0)*2)
 	for key, value := range fastresumefile {
 		positionnum++
 		var decodedval NewTorrentStructure
@@ -362,8 +367,9 @@ func main() {
 			log.Printf("Can't decode row %v with torrent %v. Continue", key, torrentname)
 		}
 		wg.Add(1)
+		boundedChannel <- true
 		go logic(key, decodedval, &torrentspath, &with_label, &with_tags, &qbitdir, comChannel,
-			errChannel, positionnum, &wg, &hashlabels)
+			errChannel, positionnum, &wg, &hashlabels, boundedChannel)
 	}
 	go func() {
 		wg.Wait()
