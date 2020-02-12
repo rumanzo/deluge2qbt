@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/go-ini/ini"
+	"github.com/juju/gnuflag"
 	"github.com/zeebo/bencode"
 	"io"
 	"io/ioutil"
-	"launchpad.net/gnuflag"
 	"log"
 	"os"
 	"os/user"
@@ -229,11 +229,12 @@ func main() {
 	var with_label, with_tags = true, true
 	var without_label, without_tags bool
 	sep := string(os.PathSeparator)
-	if runtime.GOOS == "windows" {
+	switch OS := runtime.GOOS; OS {
+	case "windows":
 		ddir = os.Getenv("APPDATA") + sep + "deluge" + sep
 		btconf = os.Getenv("APPDATA") + sep + "qBittorrent" + sep + "qBittorrent.ini"
 		btbackup = os.Getenv("LOCALAPPDATA") + sep + "qBittorrent" + sep + "BT_backup" + sep
-	} else {
+	case "linux":
 		usr, err := user.Current()
 		if err != nil {
 			panic(err)
@@ -241,6 +242,14 @@ func main() {
 		ddir = usr.HomeDir + sep + ".config" + sep + "deluge" + sep
 		btconf = usr.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qBittorrent.conf"
 		btbackup = usr.HomeDir + sep + ".local" + sep + "share" + sep + "data" + sep + "qBittorrent" + sep + "BT_backup"
+	case "darwin":
+		usr, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+		ddir = usr.HomeDir + sep + ".config" + sep + "deluge" + sep
+		config = usr.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qbittorrent.ini"
+		qbitdir = usr.HomeDir + sep + "Library" + sep + "Application Support" + sep + "QBittorrent" + sep + "BT_backup" + sep
 	}
 	gnuflag.StringVar(&delugedir, "source", ddir,
 		"Source directory that contains resume.dat and torrents files")
