@@ -36,12 +36,18 @@ Help:
 Help (from cmd or powerwhell)
 
 ```
-PS C:\Users\user\go\src\deluge2qbt> .\deluge2qbt_v0.1_amd64.exe -h
-Usage of C:\Users\user\go\src\deluge2qbt\deluge2qbt_v0.1_amd64.exe:
+PS C:\Users\user\go\src\deluge2qbt> .\deluge2qbt_v1.3_amd64.exe -h
+Usage of C:\Users\user\go\src\deluge2qbt\deluge2qbt_v1.3_amd64.exe:
 -c, --qconfig (= "C:\\Users\\user\\AppData\\Roaming\\qBittorrent\\qBittorrent.ini")
     qBittorrent config files (for write tags)
 -d, --destination (= "C:\\Users\\user\\AppData\\Local\\qBittorrent\\BT_backup\\")
     Destination directory BT_backup (as default)
+--replace (= "")
+    Replace paths.
+        Delimiter for replaces - ;
+        Delimiter for from/to - ,
+        Example: "D:\films,/home/user/films;\,/"
+        If you use path separator different from you system, declare it mannually
 -s, --source (= "C:\\Users\\user\\AppData\\Roaming\\deluge\\")
     Source directory that contains resume.dat and torrents files
 --without-labels  (= false)
@@ -55,7 +61,7 @@ Usage examples:
 
 - If you just run application, it will processing torrents from %APPDATA%\uTorrent\ to %LOCALAPPDATA%\qBittorrent\BT_BACKUP\
 ```
-C:\Users\user\Downloads> .\deluge2qbt_v0.1_amd64.exe
+C:\Users\user\Downloads> .\deluge2qbt_v1.3_amd64.exe
 It will be performed processing from directory C:\Users\user\AppData\Roaming\deluge\ to directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\
 Check that the qBittorrent is turned off and the directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\ and config C:\Users\user\AppData\Roaming\qBittorrent\qBittorrent.ini is backed up.
 
@@ -70,7 +76,7 @@ Press Enter to exit
 
 - Run application from cmd or powershell with keys, if you want change source dir or destination dir, or export/import behavior
 ```
-C:\Users\user\Downloads> .\deluge2qbt_v0.1_amd64.exe -s C:\Users\user2\AppData\Roaming\deluge\
+C:\Users\user\Downloads> .\deluge2qbt_v1.3_amd64.exe -s C:\Users\user2\AppData\Roaming\deluge\
 It will be performed processing from directory C:\Users\user2\AppData\Roaming\deluge\ to directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\
 Check that the qBittorrent is turned off and the directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\ is backed up.
 
