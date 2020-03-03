@@ -249,12 +249,12 @@ func main() {
 		}
 		ddir = usr.HomeDir + sep + ".config" + sep + "deluge" + sep
 		config = usr.HomeDir + sep + ".config" + sep + "qBittorrent" + sep + "qbittorrent.ini"
-		qbitdir = usr.HomeDir + sep + "Library" + sep + "Application Support" + sep + "QBittorrent" + sep + "BT_backup" + sep
+		btbackup = usr.HomeDir + sep + "Library" + sep + "Application Support" + sep + "QBittorrent" + sep + "BT_backup" + sep
 	}
 	gnuflag.StringVar(&delugedir, "source", ddir,
-		"Source directory that contains resume.dat and torrents files")
+		"Source directory that contains deluge files and state dir")
 	gnuflag.StringVar(&delugedir, "s", ddir,
-		"Source directory that contains resume.dat and torrents files")
+		"Source directory that contains deluge files and state dir")
 	gnuflag.StringVar(&qbitdir, "destination", btbackup,
 		"Destination directory BT_backup (as default)")
 	gnuflag.StringVar(&qbitdir, "d", btbackup,
