@@ -46,7 +46,7 @@ type Alabels struct {
 	TorrentLabels map[string]string `json:"torrent_labels,omitempty"`
 }
 
-func logic(fastResumeHashId string, fastResume qBittorrentStructures.QBittorrentFastresume, opts *Opts, chans *Channels, torrentspath *string, position int,
+func logic(fastResumeHashId string, fastResume qBittorrentStructures.QBittorrentFastresume, opts *Opts, chans *Channels, torrentsPath *string,
 	wg *sync.WaitGroup, labels *Alabels, replace []*Replace) error {
 	defer wg.Done()
 	defer func() {
@@ -60,7 +60,7 @@ func logic(fastResumeHashId string, fastResume qBittorrentStructures.QBittorrent
 		}
 	}()
 	var err error
-	torrentFilePath := *torrentspath + fastResumeHashId + ".torrent"
+	torrentFilePath := *torrentsPath + fastResumeHashId + ".torrent"
 	if _, err = os.Stat(torrentFilePath); os.IsNotExist(err) {
 		chans.errChannel <- fmt.Sprintf("Can't find torrent file %v for %v", torrentFilePath, fastResumeHashId)
 		return err
@@ -185,20 +185,20 @@ func main() {
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	torrentspath := opts.DelugeDir + "state" + sep
-	if _, err := os.Stat(torrentspath); os.IsNotExist(err) {
+	torrentsPath := opts.DelugeDir + "state" + sep
+	if _, err := os.Stat(torrentsPath); os.IsNotExist(err) {
 		log.Println("Can't find deluge state directory")
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	resumefilepath := opts.DelugeDir + "state" + sep + "torrents.fastresume"
-	if _, err := os.Stat(resumefilepath); os.IsNotExist(err) {
+	resumeFilePath := opts.DelugeDir + "state" + sep + "torrents.fastresume"
+	if _, err := os.Stat(resumeFilePath); os.IsNotExist(err) {
 		log.Println("Can't find deluge fastresume file")
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	var fastresumefile map[string]interface{}
-	err := helpers.DecodeTorrentFile(resumefilepath, &fastresumefile)
+	var fastResumeFile map[string]interface{}
+	err := helpers.DecodeTorrentFile(resumeFilePath, &fastResumeFile)
 	if err != nil {
 		log.Println("Can't decode deluge fastresume file")
 		time.Sleep(30 * time.Second)
@@ -216,14 +216,13 @@ func main() {
 	fmt.Println("Press Enter to start")
 	fmt.Scanln()
 	log.Println("Started")
-	totaljobs := len(fastresumefile)
+	totaljobs := len(fastResumeFile)
 	numjob := 1
 	var wg sync.WaitGroup
 	chans := Channels{comChannel: make(chan string, totaljobs),
 		errChannel:     make(chan string, totaljobs),
 		boundedChannel: make(chan bool, runtime.GOMAXPROCS(0)*2)}
 
-	positionnum := 0
 	var jsn bytes.Buffer
 	var labels Alabels
 	if opts.WithoutTags == false {
@@ -255,26 +254,25 @@ func main() {
 		})
 	}
 
-	for key, value := range fastresumefile {
-		positionnum++
+	for fastResumeHashId, value := range fastResumeFile {
 		var fastResume qBittorrentStructures.QBittorrentFastresume
 		if err := bencode.DecodeString(value.(string), &fastResume); err != nil {
 			torrentFile := torrentStructures.Torrent{}
-			torrentFilePath := opts.DelugeDir + "state" + sep + key + ".torrent"
+			torrentFilePath := opts.DelugeDir + "state" + sep + fastResumeHashId + ".torrent"
 			if _, err = os.Stat(torrentFilePath); os.IsNotExist(err) {
-				chans.errChannel <- fmt.Sprintf("Can't find torrent file %v. Can't decode string %v. Continue", torrentFilePath, key)
+				chans.errChannel <- fmt.Sprintf("Can't find torrent file %v. Can't decode string %v. Continue", torrentFilePath, fastResumeHashId)
 				continue
 			}
-			err = helpers.DecodeTorrentFile(torrentspath, torrentFile)
+			err = helpers.DecodeTorrentFile(torrentsPath, torrentFile)
 			if err != nil {
-				chans.errChannel <- fmt.Sprintf("Can't decode torrent file %v. Can't decode string %v. Continue", torrentFilePath, key)
+				chans.errChannel <- fmt.Sprintf("Can't decode torrent file %v. Can't decode string %v. Continue", torrentFilePath, fastResumeHashId)
 				continue
 			}
-			log.Printf("Can't decode row %v with torrent %v. Continue", key, torrentFile.Info.Name)
+			log.Printf("Can't decode row %v with torrent %v. Continue", fastResumeHashId, torrentFile.Info.Name)
 		}
 		wg.Add(1)
 		chans.boundedChannel <- true
-		go logic(key, fastResume, &opts, &chans, &torrentspath, positionnum, &wg, &labels, replaces)
+		go logic(fastResumeHashId, fastResume, &opts, &chans, &torrentsPath, &wg, &labels, replaces)
 	}
 
 	go func() {
