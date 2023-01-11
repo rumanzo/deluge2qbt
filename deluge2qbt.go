@@ -21,12 +21,14 @@ import (
 	"time"
 )
 
+var version, commit, date, buildImage string
+
 type Opts struct {
-	DelugeDir                  string   `short:"s" long:"source" description:"Source directory that contains deluge files"`
-	QBitDir                    string   `short:"d" long:"destination" description:"Destination directory BT_backup (as default)"`
-	WithoutTags                bool     `long:"without-tags" description:"Do not export/import tags"`
-	Replaces                   []string `short:"r" long:"replace" description:"Replace save paths. Important: you have to use single slashes in paths\n	Delimiter for from/to is comma - ,\n	Example: -r \"D:/films,/home/user/films\" -r \"D:/music,/home/user/music\"\n"`
-	withoutLabels, withoutTags bool
+	DelugeDir   string   `short:"s" long:"source" description:"Source directory that contains deluge files"`
+	QBitDir     string   `short:"d" long:"destination" description:"Destination directory BT_backup (as default)"`
+	WithoutTags bool     `long:"without-tags" description:"Do not export/import tags"`
+	Replaces    []string `short:"r" long:"replace" description:"Replace save paths. Important: you have to use single slashes in paths\n	Delimiter for from/to is comma - ,\n	Example: -r \"D:/films,/home/user/films\" -r \"D:/music,/home/user/music\"\n"`
+	Version     bool     `short:"v" long:"version" description:"Show version"`
 }
 
 type Channels struct {
@@ -95,7 +97,7 @@ func logic(fastResumeHashId string, fastResume qBittorrentStructures.QBittorrent
 
 	fastResume.QbtSavePath = fastResume.SavePath
 
-	if opts.withoutTags == false {
+	if opts.WithoutTags == false {
 		if label, ok := labels.TorrentLabels[fastResumeHashId]; ok {
 			fastResume.QbtTags = append(fastResume.QbtTags, label)
 		} else {
@@ -149,6 +151,12 @@ func main() {
 		}
 	}
 
+	if opts.Version {
+		date = time.Now().Format("2006-01-02 15:04:05")
+		fmt.Printf("Version: %v\nCommit: %v\nGolang version: %v\nBuild image: %v\nBuild date: %v\n", version, commit, runtime.Version(), buildImage, date)
+		os.Exit(0)
+	}
+
 	if len(opts.Replaces) != 0 {
 		for _, str := range opts.Replaces {
 			patterns := strings.Split(str, ",")
@@ -196,10 +204,10 @@ func main() {
 		time.Sleep(30 * time.Second)
 		os.Exit(1)
 	}
-	if opts.withoutTags == false || opts.withoutLabels == false {
+	if opts.WithoutTags == false {
 		if _, err := os.Stat(opts.DelugeDir + "label.conf"); os.IsNotExist(err) {
 			log.Println("Can't read Deluge label.conf file. Skipping")
-			opts.withoutTags, opts.withoutLabels = true, true
+			opts.WithoutTags = true
 		}
 	}
 	color.Green("It will be performed processing from directory %v to directory %v\n", opts.DelugeDir, opts.QBitDir)
@@ -218,7 +226,7 @@ func main() {
 	positionnum := 0
 	var jsn bytes.Buffer
 	var labels Alabels
-	if opts.withoutTags == false || opts.withoutLabels == false {
+	if opts.WithoutTags == false {
 		if jsons, err := os.ReadFile(opts.DelugeDir + "label.conf"); err != nil {
 			log.Fatal(err)
 		} else {
@@ -233,7 +241,7 @@ func main() {
 			}
 		}
 		if err := json.Unmarshal(jsn.Bytes(), &labels); err != nil {
-			opts.withoutTags, opts.withoutLabels = true, true
+			opts.WithoutTags = true
 		}
 	}
 
