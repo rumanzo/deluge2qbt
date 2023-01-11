@@ -4,7 +4,6 @@ deluge2qbt is cli tool for export from uTorrent\Bittorrent into qBittorrent (con
 	- [Feature](#user-content-feature)
 	- [Help](#user-content-help)
 	- [Usage examples](#user-content-usage-examples)
-	- [Known issuses](#user-content-known-issuses)
 	- [Linux](#user-content-linux)
 	
 Feature:
@@ -36,32 +35,30 @@ Help:
 Help (from cmd or powerwhell)
 
 ```
-PS C:\Users\user\go\src\deluge2qbt> .\deluge2qbt_v1.3_amd64.exe -h
-Usage of C:\Users\user\go\src\deluge2qbt\deluge2qbt_v1.3_amd64.exe:
--c, --qconfig (= "C:\\Users\\user\\AppData\\Roaming\\qBittorrent\\qBittorrent.ini")
-    qBittorrent config files (for write tags)
--d, --destination (= "C:\\Users\\user\\AppData\\Local\\qBittorrent\\BT_backup\\")
-    Destination directory BT_backup (as default)
---replace (= "")
-    Replace paths.
-        Delimiter for replaces - ;
-        Delimiter for from/to - ,
-        Example: "D:\films,/home/user/films;\,/"
-        If you use path separator different from you system, declare it mannually
--s, --source (= "C:\\Users\\user\\AppData\\Roaming\\deluge\\")
-    Source directory that contains resume.dat and torrents files
---without-labels  (= false)
-    Do not export/import labels
---without-tags  (= false)
-    Do not export/import tags
+PS C:\Users\user\Downloads> .\deluge2qbt_v1.999_amd64.exe -h
+Usage:
+  C:\Users\user\Downloads\deluge2qbt_v1.999_amd64.exe [OPTIONS]
+
+Application Options:
+  -s, --source=       Source directory that contains deluge files (default: C:\Users\user\AppData\Roaming\deluge\)
+  -d, --destination=  Destination directory BT_backup (as default) (default: C:\Users\user\AppData\Local\qBittorrent\BT_backup\)
+      --without-tags  Do not export/import tags
+  -r, --replace=      Replace save paths. Important: you have to use single slashes in paths
+                      Delimiter for from/to is comma - ,
+                      Example: -r "D:/films,/home/user/films" -r "D:/music,/home/user/music"
+
+  -v, --version       Show version
+
+Help Options:
+  -h, --help          Show this help message
 ```
 
 Usage examples:
 ----------------
 
-- If you just run application, it will processing torrents from %APPDATA%\uTorrent\ to %LOCALAPPDATA%\qBittorrent\BT_BACKUP\
+- If you just run application, it will processing torrents from %APPDATA%\deluge\ to %LOCALAPPDATA%\qBittorrent\BT_BACKUP\
 ```
-C:\Users\user\Downloads> .\deluge2qbt_v1.3_amd64.exe
+C:\Users\user\Downloads> .\deluge2qbt_v999_amd64.exe
 It will be performed processing from directory C:\Users\user\AppData\Roaming\deluge\ to directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\
 Check that the qBittorrent is turned off and the directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\ and config C:\Users\user\AppData\Roaming\qBittorrent\qBittorrent.ini is backed up.
 
@@ -76,7 +73,7 @@ Press Enter to exit
 
 - Run application from cmd or powershell with keys, if you want change source dir or destination dir, or export/import behavior
 ```
-C:\Users\user\Downloads> .\deluge2qbt_v1.3_amd64.exe -s C:\Users\user2\AppData\Roaming\deluge\
+C:\Users\user\Downloads> .\deluge2qbt_v999_amd64.exe -s C:\Users\user2\AppData\Roaming\deluge\
 It will be performed processing from directory C:\Users\user2\AppData\Roaming\deluge\ to directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\
 Check that the qBittorrent is turned off and the directory C:\Users\user\AppData\Local\qBittorrent\BT_backup\ is backed up.
 
@@ -92,10 +89,7 @@ Started
 
 Press Enter to exit
 ```
-Known issuses:
----------------
- - Unknown
 
-Linux
+Linux or MacOs
 ----------
-Exactly the same, just different paths.
+Exactly the same, just different paths and don't forget make chmod to deluge2qbt executable file
