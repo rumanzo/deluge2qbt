@@ -1,4 +1,4 @@
-gotag=1.18.1-bullseye
+gotag=1.19.5-bullseye
 
 commit=$(shell git rev-parse HEAD)
 
